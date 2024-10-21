@@ -23,12 +23,16 @@ class BluetoothConnection {
   late StreamSubscription<Uint8List> _readStreamSubscription;
   late StreamController<Uint8List> _readStreamController;
 
+  late StreamSubscription<dynamic> _readAnyStreamSubscription;
+  late StreamController<dynamic> _readAnyStreamController;
+
   /// Stream sink used to read from the remote Bluetooth device
   ///
   /// `.onDone` could be used to detect when remote device closes the connection.
   ///
   /// You should use some encoding to receive string in your `.listen` callback, for example `ascii.decode(data)` or `utf8.encode(data)`.
   Stream<Uint8List>? input;
+  Stream<dynamic>? inputAny;
 
   /// Stream sink used to write to the remote Bluetooth device
   ///
@@ -43,6 +47,7 @@ class BluetoothConnection {
         this._readChannel =
             EventChannel('${FlutterBluetoothSerial.namespace}/read/$id') {
     _readStreamController = StreamController<Uint8List>();
+    _readAnyStreamController = StreamController<dynamic>();
 
     _readStreamSubscription =
         _readChannel.receiveBroadcastStream().cast<Uint8List>().listen(
@@ -50,8 +55,15 @@ class BluetoothConnection {
               onError: _readStreamController.addError,
               onDone: this.close,
             );
+    _readAnyStreamSubscription =
+        _readChannel.receiveBroadcastStream().listen(
+          _readAnyStreamController.add,
+          onError: _readAnyStreamController.addError,
+          onDone: this.close,
+        );
 
     input = _readStreamController.stream;
+    inputAny = _readAnyStreamController.stream;
     output = _BluetoothStreamSink<Uint8List>(id);
   }
 
@@ -73,8 +85,12 @@ class BluetoothConnection {
     return Future.wait([
       output.close(),
       _readStreamSubscription.cancel(),
+      _readAnyStreamSubscription.cancel(),
       (!_readStreamController.isClosed)
           ? _readStreamController.close()
+          : Future.value(/* Empty future */),
+        (!_readAnyStreamController.isClosed)
+          ? _readAnyStreamController.close()
           : Future.value(/* Empty future */)
     ], eagerError: true);
   }
