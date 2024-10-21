@@ -267,7 +267,7 @@ class FlutterBluetoothSerial {
   Future<void> disconnect() => _defaultConnection!.finish();
 
   @Deprecated('Use `BluetoothConnection.input` instead')
-  Stream<Uint8List>? onRead() => _defaultConnection!.input;
+  Stream<dynamic>? onRead() => _defaultConnection!.inputAny;
 
   @Deprecated(
       'Use `BluetoothConnection.output` with some decoding (such as `ascii.decode` for strings) instead')

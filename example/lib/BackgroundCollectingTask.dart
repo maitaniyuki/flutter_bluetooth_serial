@@ -40,7 +40,7 @@ class BackgroundCollectingTask extends Model {
   bool inProgress = false;
 
   BackgroundCollectingTask._fromConnection(this._connection) {
-    _connection.input!.listen((data) {
+    _connection.inputAny!.listen((data) {
       _buffer += data;
 
       while (true) {

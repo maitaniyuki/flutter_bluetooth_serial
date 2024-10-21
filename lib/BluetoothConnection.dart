@@ -20,8 +20,6 @@ class BluetoothConnection {
   final int? _id;
 
   final EventChannel _readChannel;
-  late StreamSubscription<Uint8List> _readStreamSubscription;
-  late StreamController<Uint8List> _readStreamController;
 
   late StreamSubscription<dynamic> _readAnyStreamSubscription;
   late StreamController<dynamic> _readAnyStreamController;
@@ -31,13 +29,12 @@ class BluetoothConnection {
   /// `.onDone` could be used to detect when remote device closes the connection.
   ///
   /// You should use some encoding to receive string in your `.listen` callback, for example `ascii.decode(data)` or `utf8.encode(data)`.
-  Stream<Uint8List>? input;
   Stream<dynamic>? inputAny;
 
   /// Stream sink used to write to the remote Bluetooth device
   ///
   /// You should use some encoding to send string, for example `.add(ascii.encode('Hello!'))` or `.add(utf8.encode('Cześć!))`.
-  late _BluetoothStreamSink<Uint8List> output;
+  late _BluetoothStreamSink output;
 
   /// Describes is stream connected.
   bool get isConnected => output.isConnected;
@@ -46,15 +43,8 @@ class BluetoothConnection {
       : this._id = id,
         this._readChannel =
             EventChannel('${FlutterBluetoothSerial.namespace}/read/$id') {
-    _readStreamController = StreamController<Uint8List>();
     _readAnyStreamController = StreamController<dynamic>();
 
-    _readStreamSubscription =
-        _readChannel.receiveBroadcastStream().cast<Uint8List>().listen(
-              _readStreamController.add,
-              onError: _readStreamController.addError,
-              onDone: this.close,
-            );
     _readAnyStreamSubscription =
         _readChannel.receiveBroadcastStream().listen(
           _readAnyStreamController.add,
@@ -62,9 +52,8 @@ class BluetoothConnection {
           onDone: this.close,
         );
 
-    input = _readStreamController.stream;
     inputAny = _readAnyStreamController.stream;
-    output = _BluetoothStreamSink<Uint8List>(id);
+    output = _BluetoothStreamSink(id);
   }
 
   /// Returns connection to given address.
@@ -84,11 +73,7 @@ class BluetoothConnection {
   Future<void> close() {
     return Future.wait([
       output.close(),
-      _readStreamSubscription.cancel(),
       _readAnyStreamSubscription.cancel(),
-      (!_readStreamController.isClosed)
-          ? _readStreamController.close()
-          : Future.value(/* Empty future */),
         (!_readAnyStreamController.isClosed)
           ? _readAnyStreamController.close()
           : Future.value(/* Empty future */)
@@ -107,7 +92,7 @@ class BluetoothConnection {
 }
 
 /// Helper class for sending responses.
-class _BluetoothStreamSink<Uint8List> extends StreamSink<Uint8List> {
+class _BluetoothStreamSink extends StreamSink {
   final int? _id;
 
   /// Describes is stream connected.
@@ -145,7 +130,7 @@ class _BluetoothStreamSink<Uint8List> extends StreamSink<Uint8List> {
   ///
   /// Might throw `StateError("Not connected!")` if not connected.
   @override
-  void add(Uint8List data) {
+  void add(dynamic data) {
     if (!isConnected) {
       throw StateError("Not connected!");
     }
@@ -171,7 +156,7 @@ class _BluetoothStreamSink<Uint8List> extends StreamSink<Uint8List> {
   }
 
   @override
-  Future addStream(Stream<Uint8List> stream) => Future(() async {
+  Future addStream(Stream<dynamic> stream) => Future(() async {
         // @TODO ??? `addStream`, "alternating simultaneous addition" problem (read below)
         // If `onDone` were called some time after last `add` to the stream (what is okay),
         // this `addStream` function might wait not for the last "own" addition to this sink,
