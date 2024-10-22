@@ -525,8 +525,9 @@ public class FlutterBluetoothSerialPlugin implements FlutterPlugin, ActivityAwar
 
         @Override
         protected void onRead(byte[] buffer) {
-            String receivedData = new String(buffer, Charset.forName("UTF-8"));
-            Log.d(TAG, "Received ASCII data: " + receivedData);
+            String receivedData = new String(buffer, Charset.forName("UTF-16"));
+            Log.d(TAG, "Received UTF-16 data: " + receivedData);
+            Log.d(TAG, "Received binary data: " + Arrays.toString(buffer));
             activity.runOnUiThread(() -> {
                 if (readSink != null) {
                     readSink.success(buffer);
