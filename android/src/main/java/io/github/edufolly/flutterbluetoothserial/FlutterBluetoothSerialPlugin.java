@@ -524,8 +524,12 @@ public class FlutterBluetoothSerialPlugin implements FlutterPlugin, ActivityAwar
 
         @Override
         protected void onRead(byte[] buffer) {
-            String receivedData = new String(buffer, StandardCharsets.US_ASCII);  // ASCII形式でバイトを文字列に変換
-            Log.d(TAG, "Received ASCII data: " + receivedData);
+            try {
+                String receivedData = new String(buffer, "US-ASCII");  // ASCII形式でバイトを文字列に変換
+                Log.d(TAG, "Received ASCII data: " + receivedData);
+            } catch (UnsupportedEncodingException e) {
+                Log.e(TAG, "Error decoding ASCII data", e);
+            }
             activity.runOnUiThread(() -> {
                 if (readSink != null) {
                     readSink.success(buffer);
