@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.net.NetworkInterface;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
